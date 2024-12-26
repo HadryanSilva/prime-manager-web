@@ -15,6 +15,21 @@ const items = ref([
         label: 'Products',
         icon: 'pi pi-box',
         route: '/products'
+    },
+    {
+        label: 'Stock',
+        icon: 'pi pi-chart-bar',
+        route: '/stock'
+    },
+    {
+        label: 'Sales',
+        icon: 'pi pi-dollar',
+        route: '/sales'
+    },
+    {
+        label: 'Orders',
+        icon: 'pi pi-shopping-cart',
+        route: '/orders'
     }
 ]);
 </script>

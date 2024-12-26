@@ -13,11 +13,15 @@ const addProductDialogvisible = ref(false);
 const editProductDialogvisible = ref(false);
 const selectedItem = ref(null);
 
+const id = ref('');
+const barcode = ref('');
 const name = ref('');
 const description = ref('');
 const brand = ref('');
+const stockQuantity = ref(0);
 const buyPrice = ref('');
 const sellPrice = ref('');
+const createdAt = ref('');
 
 const loadProducts = (event) => {
     if (event) {
@@ -33,27 +37,30 @@ const loadProducts = (event) => {
 
 const addProduct = () => {
     const product = {
+        barcode: barcode.value,
         name: name.value,
         description: description.value,
         brand: brand.value,
+        stockQuantity: parseInt(stockQuantity.value),
         buyPrice: parseFloat(buyPrice.value),
         sellPrice: parseFloat(sellPrice.value)
     };
 
     productService.saveProduct(product).then(() => {
-        products.value = [...products.value, product];
+        loadProducts();
         addProductDialogvisible.value = false;
         clearForm();
         toast.add({ severity: 'success', summary: 'Success', detail: 'Product saved successfully', life: 3000 });
     }).catch(error => {
         console.error(error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while saving the product', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Error', detail: ('An error occurred while saving the product: ', error.response.data.message), life: 3000 });
     });
 };
 
 const editProduct = (productData) => {
     console.log(productData);
     selectedItem.value = productData;
+    barcode.value = productData.barCode;
     name.value = productData.name;
     description.value = productData.description;
     brand.value = productData.brand;
@@ -95,7 +102,8 @@ const deleteProduct = () => {
 };
 
 const clearForm = () => {
-    productName.value = '';
+    barcode.value = '';
+    name.value = '';
     description.value = '';
     brand.value = '';
     buyPrice.value = '';
@@ -126,17 +134,6 @@ const confirmDelete = (event) => {
         }
     });
 };
-
-const columns = [
-    { field: 'id', header: 'ID' },
-    { field: 'name', header: 'Name' },
-    { field: 'description', header: 'Description' },
-    { field: 'brand', header: 'Brand' },
-    { field: 'quantity', header: 'Quantity' },
-    { field: 'buyPrice', header: 'Buy Price' },
-    { field: 'sellPrice', header: 'Sell Price' },
-    { field: 'createdAt', header: 'Created At' }
-];
 </script>
 
 <template>
@@ -154,10 +151,11 @@ const columns = [
         <DataTable v-model:selection="selectedItem" :value="products" tableStyle="min-width: 50rem">
             <Column selectionMode="single" headerStyle="width: 3rem"></Column>
             <Column field="id" header="ID"></Column>
+            <Column field="barcode" header="Barcode"></Column>
             <Column field="name" header="Name"></Column>
             <Column field="description" header="Description"></Column>
             <Column field="brand" header="Brand"></Column>
-            <Column field="quantity" header="Quantity"></Column>
+            <Column field="stockQuantity" header="Quantity"></Column>
             <Column field="buyPrice" header="Buy Price"></Column>
             <Column field="sellPrice" header="Sell Price"></Column>
             <Column field="createdAt" header="Created At"></Column>
@@ -170,6 +168,10 @@ const columns = [
         <Paginator :rows="5" :totalRecords="120" :rowsPerPageOptions="[5, 10, 20, 30]" @page="loadProducts"></Paginator>
         <Dialog v-model:visible="addProductDialogvisible" modal header="New Product" :style="{ width: '35rem' }">
             <span class="form-description">Insert product information</span>
+            <div class="form-group">
+                <label for="barcode" class="font-semibold w-32">Barcode</label>
+                <InputText id="barcode" v-model="barcode" class="flex-auto" autocomplete="off" />
+            </div>
             <div class="form-group">
                 <label for="name" class="font-semibold w-32">name</label>
                 <InputText id="name" v-model="name" class="flex-auto" autocomplete="off" />
@@ -199,7 +201,11 @@ const columns = [
         <Dialog v-model:visible="editProductDialogvisible" modal header="New Product" :style="{ width: '35rem' }">
             <span class="form-description">Insert product information</span>
             <div class="form-group">
-                <label for="name" class="font-semibold w-32">name</label>
+                <label for="barcode" class="font-semibold w-32">Barcode</label>
+                <InputText id="barcode" v-model="barcode" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="name" class="font-semibold w-32">Name</label>
                 <InputText id="name" v-model="name" class="flex-auto" autocomplete="off" />
             </div>
             <div class="form-group">
