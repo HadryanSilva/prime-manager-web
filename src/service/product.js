@@ -9,24 +9,27 @@ const getProducts = async (page, size) => {
             size: size
         }
     }))
-    console.log(response.data);
     return response.data;
 };
 
 const saveProduct = async (product) => {
     const response = (await axios.post(BASE_URL + '/products', product));
-    console.log(response.data);
     return response.data;
 };
 
+const updateProduct = async (product) => {
+    const response = (await axios.put(BASE_URL + '/products/' + product.id, product));
+    return response.data;
+}
+
 const deleteProduct = async (id) => {
     const response = (await axios.delete(BASE_URL + '/products/' + id));
-    console.log(response.data);
     return response.data;
 };
 
 export default {
     getProducts,
     saveProduct,
+    updateProduct,
     deleteProduct
 };

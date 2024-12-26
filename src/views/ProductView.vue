@@ -9,7 +9,8 @@ const confirm = useConfirm();
 const toast = useToast();
 
 const products = ref([]);
-const visible = ref(false);
+const addProductDialogvisible = ref(false);
+const editProductDialogvisible = ref(false);
 const selectedItem = ref(null);
 
 const name = ref('');
@@ -23,6 +24,7 @@ const loadProducts = (event) => {
         console.log(event);
         const rowsPerPage = event.rows;
         const currentPage = event.page;
+        console.log(rowsPerPage, currentPage);
         productService.getProducts(currentPage, rowsPerPage).then(data => products.value = data);
     } else {
         productService.getProducts().then(data => products.value = data);
@@ -40,15 +42,55 @@ const addProduct = () => {
 
     productService.saveProduct(product).then(() => {
         products.value = [...products.value, product];
-        visible.value = false;
+        addProductDialogvisible.value = false;
         clearForm();
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Product saved successfully', life: 3000 });
+    }).catch(error => {
+        console.error(error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while saving the product', life: 3000 });
     });
 };
 
+const editProduct = (productData) => {
+    console.log(productData);
+    selectedItem.value = productData;
+    name.value = productData.name;
+    description.value = productData.description;
+    brand.value = productData.brand;
+    buyPrice.value = productData.buyPrice;
+    sellPrice.value = productData.sellPrice;
+    editProductDialogvisible.value = true;
+};
+
+const updateProduct = () => {
+    const productToUpdate = {
+        ...selectedItem.value,
+        name: name.value,
+        description: description.value,
+        brand: brand.value,
+        buyPrice: parseFloat(buyPrice.value),
+        sellPrice: parseFloat(sellPrice.value),
+    };
+
+    productService.updateProduct(productToUpdate)
+    .then(() => {
+        loadProducts();
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully', life: 3000 });
+        editProductDialogvisible.value = false;
+    }).catch(error => {
+        console.error(error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while updating the product', life: 3000 });
+    });
+}
+
 const deleteProduct = () => {
-    productService.deleteProduct(selectedItem.value.id).then(() => {
-        products.value = products.value.filter(p => p.id !== selectedItem.value.id);
+    productService.deleteProduct(selectedItem.value.id)
+    .then(() => {
+        loadProducts();
         selectedItem.value = null;
+    }).catch(error => {
+        console.error(error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while deleting the product', life: 3000 });
     });
 };
 
@@ -104,7 +146,7 @@ const columns = [
     <div class="toolbar">
         <Toolbar>
             <template #start>
-                <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="visible = true" text />
+                <Button icon="pi pi-plus" class="mr-2" severity="secondary" @click="addProductDialogvisible = true" text />
                 <Button icon="pi pi-trash" class="mr-2" severity="secondary" :disabled="!selectedItem" @click="confirmDelete($event)" text />
                 <Button icon="pi pi-upload" severity="secondary" text />
             </template>
@@ -119,10 +161,14 @@ const columns = [
             <Column field="buyPrice" header="Buy Price"></Column>
             <Column field="sellPrice" header="Sell Price"></Column>
             <Column field="createdAt" header="Created At"></Column>
-            <!-- <Column v-for="col of columns" :key="col.id" :field="col.field" :header="col.header"></Column> -->
+            <Column headerStyle="width: 6rem" bodyStyle="text-align: center">
+                <template #body="slotProps">
+                    <Button icon="pi pi-pencil" class="mr-2" severity="secondary" @click="editProduct(slotProps.data)" />
+                </template>
+            </Column>
         </DataTable>
-        <Paginator :rows="10" :totalRecords="120" :rowsPerPageOptions="[10, 20, 30]" @page="loadProducts"></Paginator>
-        <Dialog v-model:visible="visible" modal header="New Product" :style="{ width: '35rem' }">
+        <Paginator :rows="5" :totalRecords="120" :rowsPerPageOptions="[5, 10, 20, 30]" @page="loadProducts"></Paginator>
+        <Dialog v-model:visible="addProductDialogvisible" modal header="New Product" :style="{ width: '35rem' }">
             <span class="form-description">Insert product information</span>
             <div class="form-group">
                 <label for="name" class="font-semibold w-32">name</label>
@@ -145,8 +191,36 @@ const columns = [
                 <InputText id="sellPrice" v-model="sellPrice" class="flex-auto" autocomplete="off" />
             </div>
             <div class="form-options">
-                <Button type="button" label="Cancel" severity="secondary" @click="visible = false"></Button>
+                <Button type="button" label="Cancel" severity="secondary" @click="addProductDialogvisible = false"></Button>
                 <Button type="button" label="Save" @click="addProduct"></Button>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="editProductDialogvisible" modal header="New Product" :style="{ width: '35rem' }">
+            <span class="form-description">Insert product information</span>
+            <div class="form-group">
+                <label for="name" class="font-semibold w-32">name</label>
+                <InputText id="name" v-model="name" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="description" class="font-semibold w-32">Description</label>
+                <InputText id="description" v-model="description" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="brand" class="font-semibold w-32">Brand</label>
+                <InputText id="brand" v-model="brand" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="buyPrice" class="font-semibold w-32">Buy Price</label>
+                <InputText id="buyPrice" v-model="buyPrice" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="sellPrice" class="font-semibold w-32">Sell Price</label>
+                <InputText id="sellPrice" v-model="sellPrice" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="form-options">
+                <Button type="button" label="Cancel" severity="secondary" @click="editProductDialogvisible = false"></Button>
+                <Button type="button" label="Save" @click="updateProduct"></Button>
             </div>
         </Dialog>
     </div>
@@ -154,6 +228,12 @@ const columns = [
 </template>
 
 <style scoped>
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
     .toolbar {
         display: flex;
         flex-direction: column;
