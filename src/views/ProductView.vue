@@ -29,26 +29,54 @@ const loadProducts = (event) => {
     }
 };
 
-const addProduct = () => {
-    const product = {
-        name: name.value,
-        description: description.value,
-        brand: brand.value,
-        buyPrice: parseFloat(buyPrice.value),
-        sellPrice: parseFloat(sellPrice.value)
-    };
+const addProduct = (product) => {
+    if (product) {
+        editProduct(product);
+    } else {
+        const product = {
+            name: name.value,
+            description: description.value,
+            brand: brand.value,
+            buyPrice: parseFloat(buyPrice.value),
+            sellPrice: parseFloat(sellPrice.value)
+        };
 
-    productService.saveProduct(product).then(() => {
-        products.value = [...products.value, product];
-        visible.value = false;
-        clearForm();
+        productService.saveProduct(product).then(() => {
+            products.value = [...products.value, product];
+            visible.value = false;
+            clearForm();
+        });
+    }
+    
+};
+
+const editProduct = (product) => {
+    console.log(product);
+    selectedItem.value = product;
+    name.value = product.name;
+    description.value = product.description;
+    brand.value = product.brand;
+    buyPrice.value = product.buyPrice;
+    sellPrice.value = product.sellPrice;
+    visible.value = true;
+
+    productService.updateProduct(product)
+    .then(() => {
+        loadProducts();
+    }).catch(error => {
+        console.error(error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while updating the product', life: 3000 });
     });
 };
 
 const deleteProduct = () => {
-    productService.deleteProduct(selectedItem.value.id).then(() => {
-        products.value = products.value.filter(p => p.id !== selectedItem.value.id);
+    productService.deleteProduct(selectedItem.value.id)
+    .then(() => {
+        loadProducts();
         selectedItem.value = null;
+    }).catch(error => {
+        console.error(error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while deleting the product', life: 3000 });
     });
 };
 
@@ -119,6 +147,11 @@ const columns = [
             <Column field="buyPrice" header="Buy Price"></Column>
             <Column field="sellPrice" header="Sell Price"></Column>
             <Column field="createdAt" header="Created At"></Column>
+            <Column headerStyle="width: 6rem" bodyStyle="text-align: center">
+                <template #body="slotProps">
+                    <Button icon="pi pi-pencil" class="mr-2" severity="secondary" @click="addProduct(slotProps.data)" />
+                </template>
+            </Column>
             <!-- <Column v-for="col of columns" :key="col.id" :field="col.field" :header="col.header"></Column> -->
         </DataTable>
         <Paginator :rows="10" :totalRecords="120" :rowsPerPageOptions="[10, 20, 30]" @page="loadProducts"></Paginator>

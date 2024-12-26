@@ -19,6 +19,12 @@ const saveProduct = async (product) => {
     return response.data;
 };
 
+const updateProduct = async (product) => {
+    const response = (await axios.put(BASE_URL + '/products/' + product.id, product));
+    console.log(response.data);
+    return response.data;
+}
+
 const deleteProduct = async (id) => {
     const response = (await axios.delete(BASE_URL + '/products/' + id));
     console.log(response.data);
@@ -28,5 +34,6 @@ const deleteProduct = async (id) => {
 export default {
     getProducts,
     saveProduct,
+    updateProduct,
     deleteProduct
 };
